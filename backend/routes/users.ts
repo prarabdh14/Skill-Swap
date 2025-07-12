@@ -3,6 +3,41 @@ import { prisma } from '../lib/prisma';
 
 const router = Router();
 
+// Helper function to format skill data consistently
+const formatSkill = (skill: any) => ({
+  id: skill.id,
+  name: skill.name,
+  category: skill.category,
+  level: skill.level.charAt(0) + skill.level.slice(1).toLowerCase(), // Convert BEGINNER to Beginner
+  description: skill.description
+});
+
+// Helper function to format user data consistently
+const formatUserData = (user: any) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  location: user.location,
+  profilePhoto: user.profilePhoto,
+  availability: user.availability,
+  isPublic: user.isPublic,
+  rating: user.rating,
+  swapsCompleted: user.swapsCompleted,
+  isAdmin: user.isAdmin,
+  isBanned: user.isBanned,
+  createdAt: user.createdAt,
+  skillsOffered: user.userSkills
+    .filter((us: any) => us.isOffered)
+    .map((us: any) => formatSkill(us.skill)),
+  skillsWanted: user.userSkills
+    .filter((us: any) => !us.isOffered)
+    .map((us: any) => formatSkill(us.skill)),
+  badges: user.badges.map((ub: any) => ({
+    ...ub.badge,
+    unlockedAt: ub.unlockedAt
+  }))
+});
+
 // Get all users (for discovery)
 router.get('/', async (req, res) => {
   try {
@@ -51,30 +86,7 @@ router.get('/', async (req, res) => {
     }
 
     // Format user data
-    const formattedUsers = filteredUsers.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      location: user.location,
-      profilePhoto: user.profilePhoto,
-      availability: user.availability,
-      isPublic: user.isPublic,
-      rating: user.rating,
-      swapsCompleted: user.swapsCompleted,
-      isAdmin: user.isAdmin,
-      isBanned: user.isBanned,
-      createdAt: user.createdAt,
-      skillsOffered: user.userSkills
-        .filter(us => us.isOffered)
-        .map(us => us.skill),
-      skillsWanted: user.userSkills
-        .filter(us => !us.isOffered)
-        .map(us => us.skill),
-      badges: user.badges.map(ub => ({
-        ...ub.badge,
-        unlockedAt: ub.unlockedAt
-      }))
-    }));
+    const formattedUsers = filteredUsers.map(user => formatUserData(user));
 
     res.json(formattedUsers);
   } catch (error) {
@@ -109,30 +121,7 @@ router.get('/:id', async (req, res) => {
     }
 
     // Format user data
-    const userData = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      location: user.location,
-      profilePhoto: user.profilePhoto,
-      availability: user.availability,
-      isPublic: user.isPublic,
-      rating: user.rating,
-      swapsCompleted: user.swapsCompleted,
-      isAdmin: user.isAdmin,
-      isBanned: user.isBanned,
-      createdAt: user.createdAt,
-      skillsOffered: user.userSkills
-        .filter(us => us.isOffered)
-        .map(us => us.skill),
-      skillsWanted: user.userSkills
-        .filter(us => !us.isOffered)
-        .map(us => us.skill),
-      badges: user.badges.map(ub => ({
-        ...ub.badge,
-        unlockedAt: ub.unlockedAt
-      }))
-    };
+    const userData = formatUserData(user);
 
     res.json(userData);
   } catch (error) {
@@ -296,30 +285,7 @@ router.put('/:id/skills', async (req, res) => {
     }
 
     // Format user data
-    const userData = {
-      id: updatedUser.id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      location: updatedUser.location,
-      profilePhoto: updatedUser.profilePhoto,
-      availability: updatedUser.availability,
-      isPublic: updatedUser.isPublic,
-      rating: updatedUser.rating,
-      swapsCompleted: updatedUser.swapsCompleted,
-      isAdmin: updatedUser.isAdmin,
-      isBanned: updatedUser.isBanned,
-      createdAt: updatedUser.createdAt,
-      skillsOffered: updatedUser.userSkills
-        .filter(us => us.isOffered)
-        .map(us => us.skill),
-      skillsWanted: updatedUser.userSkills
-        .filter(us => !us.isOffered)
-        .map(us => us.skill),
-      badges: updatedUser.badges.map(ub => ({
-        ...ub.badge,
-        unlockedAt: ub.unlockedAt
-      }))
-    };
+    const userData = formatUserData(updatedUser);
 
     res.json({
       message: 'Skills updated successfully',
