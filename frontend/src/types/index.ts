@@ -65,6 +65,17 @@ export interface Message {
   isRead: boolean;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'swap_request' | 'swap_accepted' | 'swap_rejected' | 'swap_completed' | 'message' | 'system';
+  isRead: boolean;
+  createdAt: Date;
+  relatedId?: string; // ID of related swap, message, etc.
+}
+
 export interface AdminAnnouncement {
   id: string;
   title: string;
@@ -82,6 +93,7 @@ export interface AppState {
   swapRequests: SwapRequest[];
   ratings: Rating[];
   messages: Message[];
+  notifications: Notification[];
   announcements: AdminAnnouncement[];
   theme: Theme;
 }

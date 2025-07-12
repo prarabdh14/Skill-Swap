@@ -5,6 +5,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Input } from '../ui/Input';
+import { NotificationBell } from '../ui/NotificationBell';
 
 interface HeaderProps {
   currentView: string;
@@ -101,13 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
           {/* Actions */}
           <div className="flex items-center space-x-2">
             {/* Notifications */}
-            <Button variant="ghost" size="sm" icon={Bell} className="relative">
-              {(unreadMessages + pendingSwaps) > 0 && (
-                <Badge variant="error" size="sm" className="absolute -top-1 -right-1 min-w-[18px] h-4">
-                  {unreadMessages + pendingSwaps}
-                </Badge>
-              )}
-            </Button>
+            <NotificationBell />
 
             {/* Messages */}
             <Button 
@@ -131,7 +126,9 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
                 size="sm"
                 icon={ThemeIcon}
                 onClick={() => setShowThemeMenu(!showThemeMenu)}
-              />
+              >
+                <span className="sr-only">Theme</span>
+              </Button>
               
               {showThemeMenu && (
                 <div className="absolute right-0 top-full mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 animate-in slide-in-from-top-2 duration-200">
@@ -228,7 +225,9 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
               icon={showMobileMenu ? X : Menu}
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="md:hidden"
-            />
+            >
+              <span className="sr-only">Menu</span>
+            </Button>
           </div>
         </div>
 
