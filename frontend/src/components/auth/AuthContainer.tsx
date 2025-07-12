@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { SignIn } from './SignIn';
 import { SignUp } from './SignUp';
 import { useApp } from '../../contexts/AppContext';
-import { mockUsers } from '../../data/mockData';
+import { authService, SignUpData, SignInData } from '../../services';
 
 interface AuthContainerProps {
   onAuthSuccess: () => void;
@@ -19,94 +20,80 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) =
     setAuthError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock authentication logic
-      const user = mockUsers.find(u => u.email === email);
-      
-      if (!user) {
-        setAuthError('Invalid email or password');
-        return;
-      }
-
-      // In a real app, you would verify the password here
-      // For demo purposes, we'll accept any password for existing users
-      
+      const { user } = await authService.signIn({ email, password });
       dispatch({ type: 'SET_CURRENT_USER', payload: user });
       onAuthSuccess();
     } catch (error) {
-      setAuthError('An error occurred during sign in. Please try again.');
+      setAuthError(error instanceof Error ? error.message : 'An error occurred during sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSignUp = async (userData: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    location: string;
-  }) => {
+  const handleSignUp = async (userData: SignUpData) => {
     setIsLoading(true);
     setAuthError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { user } = await authService.signUp(userData);
+      dispatch({ type: 'SET_CURRENT_USER', payload: user });
+      onAuthSuccess();
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'An error occurred during sign up. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Check if user already exists
-      const existingUser = mockUsers.find(u => u.email === userData.email);
-      if (existingUser) {
-        setAuthError('An account with this email already exists');
-        return;
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      // Send the Google credential to our backend
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Google authentication failed');
       }
 
-      // Create new user (in a real app, this would be an API call)
-      const newUser = {
-        id: `user_${Date.now()}`,
-        name: userData.name,
-        email: userData.email,
-        location: userData.location,
-        profilePhoto: undefined,
-        skillsOffered: [],
-        skillsWanted: [],
-        availability: [],
-        isPublic: true,
-        rating: 0,
-        swapsCompleted: 0,
-        badges: [],
-        isAdmin: false,
-        isBanned: false,
-        createdAt: new Date()
-      };
-
-      dispatch({ type: 'SET_CURRENT_USER', payload: newUser });
+      const { user, token } = await response.json();
+      
+      // Store the token
+      localStorage.setItem('authToken', token);
+      
+      // Update app state
+      dispatch({ type: 'SET_CURRENT_USER', payload: user });
       onAuthSuccess();
     } catch (error) {
-      setAuthError('An error occurred during sign up. Please try again.');
+      setAuthError('Google authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialAuth = async (provider: 'google' | 'twitter') => {
-    setIsLoading(true);
-    setAuthError(null);
+  const handleGoogleError = () => {
+    setAuthError('Google authentication was cancelled or failed.');
+  };
 
-    try {
-      // Simulate social auth delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For demo purposes, use the first mock user
-      const demoUser = mockUsers[0];
-      dispatch({ type: 'SET_CURRENT_USER', payload: demoUser });
-      onAuthSuccess();
-    } catch (error) {
-      setAuthError(`An error occurred during ${provider} authentication. Please try again.`);
-    } finally {
-      setIsLoading(false);
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: handleGoogleError,
+  });
+
+  const handleSocialAuth = async (provider: 'google' | 'twitter') => {
+    if (provider === 'google') {
+      googleLogin();
+    } else {
+      setAuthError(`${provider} authentication is not implemented yet. Please use email/password.`);
     }
   };
 
@@ -152,27 +139,28 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) =
           <SignUp
             onSwitchToSignIn={() => setIsSignUp(false)}
             onSignUp={handleSignUp}
+            onGoogleAuth={() => handleSocialAuth('google')}
             isLoading={isLoading}
           />
         ) : (
           <SignIn
             onSwitchToSignUp={() => setIsSignUp(true)}
             onSignIn={handleSignIn}
+            onGoogleAuth={() => handleSocialAuth('google')}
             isLoading={isLoading}
           />
         )}
       </div>
 
-      {/* Demo credentials hint */}
+      {/* Info hint */}
       <div className="fixed bottom-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 shadow-lg max-w-sm">
         <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-          Demo Credentials
+          Getting Started
         </h3>
         <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-          <p><strong>Email:</strong> alex@example.com</p>
-          <p><strong>Password:</strong> any password</p>
+          <p>Create a new account or sign in to start swapping skills!</p>
           <p className="text-xs text-gray-500 mt-2">
-            Try signing in with these demo credentials to explore the app!
+            The backend API is now connected and ready to use.
           </p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AppProvider } from './contexts/AppContext';
 import { Header } from './components/layout/Header';
@@ -59,12 +60,16 @@ function AppContent() {
 }
 
 function App() {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
   return (
-    <ThemeProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </ThemeProvider>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <ThemeProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
 
