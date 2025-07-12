@@ -6,6 +6,34 @@ import { prisma } from '../lib/prisma';
 
 const router = Router();
 
+// Helper function to format user data for frontend
+const formatUserData = (user: any) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  location: user.location,
+  profilePhoto: user.profilePhoto,
+  availability: user.availability,
+  isPublic: user.isPublic,
+  rating: user.rating,
+  swapsCompleted: user.swapsCompleted,
+  isAdmin: user.isAdmin,
+  isBanned: user.isBanned,
+  createdAt: user.createdAt,
+  skillsOffered: user.userSkills
+    ? user.userSkills.filter((us: any) => us.isOffered).map((us: any) => us.skill)
+    : [],
+  skillsWanted: user.userSkills
+    ? user.userSkills.filter((us: any) => !us.isOffered).map((us: any) => us.skill)
+    : [],
+  badges: user.badges
+    ? user.badges.map((ub: any) => ({
+        ...ub.badge,
+        unlockedAt: ub.unlockedAt
+      }))
+    : []
+});
+
 // Sign up
 router.post('/signup', async (req, res) => {
   try {
@@ -47,12 +75,7 @@ router.post('/signup', async (req, res) => {
 
     res.status(201).json({
       message: 'User created successfully',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        location: user.location
-      },
+      user: formatUserData(user),
       token
     });
   } catch (error) {
@@ -105,35 +128,9 @@ router.post('/signin', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Format user data for frontend
-    const userData = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      location: user.location,
-      profilePhoto: user.profilePhoto,
-      availability: user.availability,
-      isPublic: user.isPublic,
-      rating: user.rating,
-      swapsCompleted: user.swapsCompleted,
-      isAdmin: user.isAdmin,
-      isBanned: user.isBanned,
-      createdAt: user.createdAt,
-      skillsOffered: user.userSkills
-        .filter(us => us.isOffered)
-        .map(us => us.skill),
-      skillsWanted: user.userSkills
-        .filter(us => !us.isOffered)
-        .map(us => us.skill),
-      badges: user.badges.map(ub => ({
-        ...ub.badge,
-        unlockedAt: ub.unlockedAt
-      }))
-    };
-
     res.json({
       message: 'Sign in successful',
-      user: userData,
+      user: formatUserData(user),
       token
     });
   } catch (error) {
@@ -173,33 +170,7 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Format user data
-    const userData = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      location: user.location,
-      profilePhoto: user.profilePhoto,
-      availability: user.availability,
-      isPublic: user.isPublic,
-      rating: user.rating,
-      swapsCompleted: user.swapsCompleted,
-      isAdmin: user.isAdmin,
-      isBanned: user.isBanned,
-      createdAt: user.createdAt,
-      skillsOffered: user.userSkills
-        .filter(us => us.isOffered)
-        .map(us => us.skill),
-      skillsWanted: user.userSkills
-        .filter(us => !us.isOffered)
-        .map(us => us.skill),
-      badges: user.badges.map(ub => ({
-        ...ub.badge,
-        unlockedAt: ub.unlockedAt
-      }))
-    };
-
-    res.json({ user: userData });
+    res.json({ user: formatUserData(user) });
   } catch (error) {
     console.error('Token verification error:', error);
     res.status(401).json({ error: 'Invalid token' });
@@ -231,9 +202,13 @@ router.post('/google', async (req, res) => {
 
     const { email, name, picture } = payload;
 
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Invalid Google token payload' });
+    }
+
     // Check if user already exists
     let user = await prisma.user.findUnique({
-      where: { email: email! },
+      where: { email },
       include: {
         userSkills: {
           include: {
@@ -249,12 +224,15 @@ router.post('/google', async (req, res) => {
     });
 
     if (!user) {
-      // Create new user
+      // Create new user with a placeholder password for OAuth users
+      const placeholderPassword = await bcrypt.hash(Math.random().toString(36) + Date.now().toString(36), 12);
+      
       user = await prisma.user.create({
         data: {
-          email: email!,
-          name: name!,
-          profilePhoto: picture,
+          email,
+          name,
+          password: placeholderPassword, // Required field, but OAuth users won't use it
+          profilePhoto: picture || null,
           location: 'Unknown', // Default location
         },
         include: {
@@ -279,35 +257,9 @@ router.post('/google', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Format user data for frontend
-    const userData = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      location: user.location,
-      profilePhoto: user.profilePhoto,
-      availability: user.availability,
-      isPublic: user.isPublic,
-      rating: user.rating,
-      swapsCompleted: user.swapsCompleted,
-      isAdmin: user.isAdmin,
-      isBanned: user.isBanned,
-      createdAt: user.createdAt,
-      skillsOffered: user.userSkills
-        .filter(us => us.isOffered)
-        .map(us => us.skill),
-      skillsWanted: user.userSkills
-        .filter(us => !us.isOffered)
-        .map(us => us.skill),
-      badges: user.badges.map(ub => ({
-        ...ub.badge,
-        unlockedAt: ub.unlockedAt
-      }))
-    };
-
     res.json({
       message: 'Google authentication successful',
-      user: userData,
+      user: formatUserData(user),
       token
     });
   } catch (error) {
