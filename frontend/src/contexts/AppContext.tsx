@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AppState, User, SwapRequest, Rating, Message, AdminAnnouncement } from '../types';
-import { mockUsers, mockSwapRequests, mockRatings, mockMessages, mockAnnouncements } from '../data/mockData';
+import { authService, getAuthToken } from '../services';
 
 interface AppContextType {
   state: AppState;
@@ -22,11 +22,11 @@ type AppAction =
 
 const initialState: AppState = {
   currentUser: null, // Start with no user logged in
-  users: mockUsers,
-  swapRequests: mockSwapRequests,
-  ratings: mockRatings,
-  messages: mockMessages,
-  announcements: mockAnnouncements,
+  users: [],
+  swapRequests: [],
+  ratings: [],
+  messages: [],
+  announcements: [],
   theme: 'system'
 };
 
@@ -127,6 +127,22 @@ export const useApp = () => {
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // Check for existing auth token on app load
+  useEffect(() => {
+    const token = getAuthToken();
+    if (token) {
+      // Verify token and set current user
+      authService.verifyToken()
+        .then(({ user }) => {
+          dispatch({ type: 'SET_CURRENT_USER', payload: user });
+        })
+        .catch(() => {
+          // Token is invalid, remove it
+          authService.signOut();
+        });
+    }
+  }, []);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
