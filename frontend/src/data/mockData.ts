@@ -1,15 +1,7 @@
 import { User, SwapRequest, Rating, Message, AdminAnnouncement, Skill, Badge } from '../types';
+import { allSkills } from './skillCategories';
 
-export const mockSkills: Skill[] = [
-  { id: '1', name: 'JavaScript', category: 'Programming', level: 'Advanced', description: 'Modern JavaScript and ES6+' },
-  { id: '2', name: 'React', category: 'Programming', level: 'Expert', description: 'React hooks, context, and performance optimization' },
-  { id: '3', name: 'Guitar', category: 'Music', level: 'Intermediate', description: 'Acoustic and electric guitar' },
-  { id: '4', name: 'Spanish', category: 'Language', level: 'Beginner', description: 'Basic conversational Spanish' },
-  { id: '5', name: 'Photography', category: 'Creative', level: 'Advanced', description: 'Portrait and landscape photography' },
-  { id: '6', name: 'Cooking', category: 'Lifestyle', level: 'Intermediate', description: 'Italian and Mediterranean cuisine' },
-  { id: '7', name: 'Python', category: 'Programming', level: 'Expert', description: 'Data science and web development' },
-  { id: '8', name: 'Yoga', category: 'Fitness', level: 'Advanced', description: 'Hatha and Vinyasa yoga' }
-];
+export const mockSkills: Skill[] = allSkills;
 
 export const mockBadges: Badge[] = [
   { id: '1', name: 'First Swap', description: 'Completed your first skill swap', icon: '🎯', rarity: 'common' },

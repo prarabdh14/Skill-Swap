@@ -1,5 +1,5 @@
 import { apiFetch, handleResponse } from './api';
-import { User, Skill } from '../types';
+import { User } from '../types';
 
 export interface UpdateUserData {
   name?: string;
@@ -9,53 +9,48 @@ export interface UpdateUserData {
   isPublic?: boolean;
 }
 
-export interface AddSkillData {
-  skillId: string;
-  isOffered: boolean;
+export interface UpdateSkillsData {
+  skillsOffered: string[];
+  skillsWanted: string[];
 }
 
 export const userService = {
-  // Get all users (for discovery)
-  async getUsers(params?: { search?: string; category?: string; level?: string }): Promise<User[]> {
-    const queryParams = new URLSearchParams();
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.category) queryParams.append('category', params.category);
-    if (params?.level) queryParams.append('level', params.level);
-
-    const endpoint = `/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await apiFetch(endpoint);
-    return handleResponse<User[]>(response);
-  },
-
-  // Get user by ID
-  async getUser(id: string): Promise<User> {
-    const response = await apiFetch(`/users/${id}`);
-    return handleResponse<User>(response);
-  },
-
   // Update user profile
-  async updateUser(id: string, data: UpdateUserData): Promise<{ message: string; user: User }> {
-    const response = await apiFetch(`/users/${id}`, {
+  async updateProfile(userId: string, data: UpdateUserData): Promise<{ message: string; user: User }> {
+    const response = await apiFetch(`/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });
     return handleResponse<{ message: string; user: User }>(response);
   },
 
-  // Add skill to user
-  async addSkill(userId: string, data: AddSkillData): Promise<{ message: string; userSkill: any }> {
+  // Update user skills
+  async updateSkills(userId: string, data: UpdateSkillsData): Promise<{ message: string; user: User }> {
     const response = await apiFetch(`/users/${userId}/skills`, {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify(data)
     });
-    return handleResponse<{ message: string; userSkill: any }>(response);
+    return handleResponse<{ message: string; user: User }>(response);
   },
 
-  // Remove skill from user
-  async removeSkill(userId: string, skillId: string, isOffered: boolean): Promise<{ message: string }> {
-    const response = await apiFetch(`/users/${userId}/skills/${skillId}?isOffered=${isOffered}`, {
-      method: 'DELETE'
-    });
-    return handleResponse<{ message: string }>(response);
+  // Get user by ID
+  async getUser(userId: string): Promise<User> {
+    const response = await apiFetch(`/users/${userId}`);
+    return handleResponse<User>(response);
+  },
+
+  // Get all users
+  async getUsers(filters?: {
+    category?: string;
+    level?: string;
+    location?: string;
+  }): Promise<User[]> {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.level) params.append('level', filters.level);
+    if (filters?.location) params.append('location', filters.location);
+
+    const response = await apiFetch(`/users${params.toString() ? `?${params.toString()}` : ''}`);
+    return handleResponse<User[]>(response);
   }
 }; 

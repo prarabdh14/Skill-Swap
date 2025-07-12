@@ -18,7 +18,7 @@ export const SkillDiscovery: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [swapMessage, setSwapMessage] = useState('');
 
-  const categories = ['Programming', 'Music', 'Language', 'Creative', 'Lifestyle', 'Fitness'];
+  const categories = ['Technical & Programming', 'Creative Arts', 'Music & Audio', 'Languages', 'Lifestyle & Wellness', 'Business & Professional', 'Crafts & DIY', 'Sports & Recreation', 'Academic & Education'];
   const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
   const filteredUsers = useMemo(() => {
