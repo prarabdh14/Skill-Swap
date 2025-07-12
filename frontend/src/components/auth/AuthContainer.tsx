@@ -50,31 +50,19 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) =
     setAuthError(null);
 
     try {
-      // Send the Google credential to our backend
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/auth/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          credential: credentialResponse.credential,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Google authentication failed');
+      if (!credentialResponse.credential) {
+        throw new Error('No credential received from Google');
       }
 
-      const { user, token } = await response.json();
+      const { user } = await authService.signInWithGoogle({
+        credential: credentialResponse.credential,
+      });
       
-      // Store the token
-      localStorage.setItem('authToken', token);
-      
-      // Update app state
       dispatch({ type: 'SET_CURRENT_USER', payload: user });
       onAuthSuccess();
     } catch (error) {
-      setAuthError('Google authentication failed. Please try again.');
+      console.error('Google auth error:', error);
+      setAuthError('Google authentication is temporarily unavailable. Please use email/password.');
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +75,7 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) =
   const googleLogin = useGoogleLogin({
     onSuccess: handleGoogleSuccess,
     onError: handleGoogleError,
+    flow: 'implicit', // Try explicit flow if implicit doesn't work
   });
 
   const handleSocialAuth = async (provider: 'google' | 'twitter') => {

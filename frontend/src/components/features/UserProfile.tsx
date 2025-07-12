@@ -41,19 +41,13 @@ export const UserProfile: React.FC = () => {
   const handleSave = async () => {
     if (editedUser) {
       try {
-        // Update user profile data
-        await userService.updateProfile(editedUser.id, {
+        // Update user profile data only (skills are saved immediately)
+        const { user: updatedUser } = await userService.updateProfile(editedUser.id, {
           name: editedUser.name,
           location: editedUser.location,
           profilePhoto: editedUser.profilePhoto,
           availability: editedUser.availability,
           isPublic: editedUser.isPublic
-        });
-
-        // Update user skills
-        const { user: updatedUser } = await userService.updateSkills(editedUser.id, {
-          skillsOffered: editedUser.skillsOffered.map(skill => skill.id),
-          skillsWanted: editedUser.skillsWanted.map(skill => skill.id)
         });
 
         // Update the user data with the response from the backend
@@ -79,29 +73,86 @@ export const UserProfile: React.FC = () => {
     setIsEditing(false);
   };
 
-  const addSkill = (skill: Skill) => {
+  const addSkill = async (skill: Skill) => {
     if (!editedUser) return;
     
-    const updatedUser = {
-      ...editedUser,
-      [skillType === 'offered' ? 'skillsOffered' : 'skillsWanted']: [
-        ...editedUser[skillType === 'offered' ? 'skillsOffered' : 'skillsWanted'],
-        skill
-      ]
-    };
-    setEditedUser(updatedUser);
-    setShowSkillModal(false);
+    try {
+      // Add skill to local state immediately for UI responsiveness
+      const updatedUser = {
+        ...editedUser,
+        [skillType === 'offered' ? 'skillsOffered' : 'skillsWanted']: [
+          ...editedUser[skillType === 'offered' ? 'skillsOffered' : 'skillsWanted'],
+          skill
+        ]
+      };
+      setEditedUser(updatedUser);
+      
+      // Save to backend immediately
+      const { user: savedUser } = await userService.updateSkills(editedUser.id, {
+        skillsOffered: updatedUser.skillsOffered.map(skill => skill.id),
+        skillsWanted: updatedUser.skillsWanted.map(skill => skill.id)
+      });
+
+      // Update global state with the response from backend
+      const formattedUser = {
+        ...savedUser,
+        createdAt: new Date(savedUser.createdAt),
+        badges: savedUser.badges?.map((badge: any) => ({
+          ...badge,
+          unlockedAt: badge.unlockedAt ? new Date(badge.unlockedAt) : undefined
+        })) || []
+      };
+
+      dispatch({ type: 'UPDATE_USER', payload: formattedUser });
+      
+      // Update local state with the formatted user data
+      setEditedUser(formattedUser);
+      
+      setShowSkillModal(false);
+    } catch (error) {
+      console.error('Error adding skill:', error);
+      // Revert local state if backend save failed
+      setEditedUser(state.currentUser);
+    }
   };
 
-  const removeSkill = (skillId: string, type: 'offered' | 'wanted') => {
+  const removeSkill = async (skillId: string, type: 'offered' | 'wanted') => {
     if (!editedUser) return;
     
-    const updatedUser = {
-      ...editedUser,
-      [type === 'offered' ? 'skillsOffered' : 'skillsWanted']: 
-        editedUser[type === 'offered' ? 'skillsOffered' : 'skillsWanted'].filter(s => s.id !== skillId)
-    };
-    setEditedUser(updatedUser);
+    try {
+      // Remove skill from local state immediately for UI responsiveness
+      const updatedUser = {
+        ...editedUser,
+        [type === 'offered' ? 'skillsOffered' : 'skillsWanted']: 
+          editedUser[type === 'offered' ? 'skillsOffered' : 'skillsWanted'].filter(s => s.id !== skillId)
+      };
+      setEditedUser(updatedUser);
+      
+      // Save to backend immediately
+      const { user: savedUser } = await userService.updateSkills(editedUser.id, {
+        skillsOffered: updatedUser.skillsOffered.map(skill => skill.id),
+        skillsWanted: updatedUser.skillsWanted.map(skill => skill.id)
+      });
+
+      // Update global state with the response from backend
+      const formattedUser = {
+        ...savedUser,
+        createdAt: new Date(savedUser.createdAt),
+        badges: savedUser.badges?.map((badge: any) => ({
+          ...badge,
+          unlockedAt: badge.unlockedAt ? new Date(badge.unlockedAt) : undefined
+        })) || []
+      };
+
+      dispatch({ type: 'UPDATE_USER', payload: formattedUser });
+      
+      // Update local state with the formatted user data
+      setEditedUser(formattedUser);
+    } catch (error) {
+      console.error('Error removing skill:', error);
+      // Revert local state if backend save failed
+      setEditedUser(state.currentUser);
+    }
   };
 
   const getRarityColor = (rarity: string) => {

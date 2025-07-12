@@ -180,29 +180,44 @@ router.get('/verify', async (req, res) => {
 // Google OAuth
 router.post('/google', async (req, res) => {
   try {
+    console.log('Backend: Received Google OAuth request body:', req.body);
     const { credential } = req.body;
 
     if (!credential) {
+      console.error('Google OAuth: Missing credential');
       return res.status(400).json({ error: 'Google credential is required' });
     }
 
+    if (!process.env.VITE_GOOGLE_CLIENT_ID) {
+      console.error('Google OAuth: Missing GOOGLE_CLIENT_ID environment variable');
+      return res.status(500).json({ error: 'Google OAuth not configured' });
+    }
+
     // Initialize Google OAuth client
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
 
     // Verify the Google token
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.VITE_GOOGLE_CLIENT_ID
+      });
+    } catch (error) {
+      console.error('Google OAuth: Token verification failed', error);
+      return res.status(400).json({ error: 'Invalid Google token' });
+    }
 
     const payload = ticket.getPayload();
     if (!payload) {
+      console.error('Google OAuth: Invalid token payload');
       return res.status(400).json({ error: 'Invalid Google token' });
     }
 
     const { email, name, picture } = payload;
 
     if (!email || !name) {
+      console.error('Google OAuth: Missing email or name in payload', { email, name });
       return res.status(400).json({ error: 'Invalid Google token payload' });
     }
 
