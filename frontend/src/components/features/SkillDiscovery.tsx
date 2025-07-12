@@ -8,8 +8,10 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
-import { User, SwapRequest } from '../../types';
+import { User, SwapRequest, Skill } from '../../types';
 import { userService } from '../../services/userService';
+import { swapService } from '../../services/swapService';
+import { notificationService } from '../../services/notificationService';
 import { SwapRequestIcon, FeedbackIcon, LikeIcon, ShareIcon, BookmarkIcon } from '../ui/AnimatedIcon';
 import { ThreeDCarousel } from './ThreeDCarousel';
 import { SectionParallax } from '../ui/ParallaxBackground';
@@ -23,6 +25,8 @@ export const SkillDiscovery: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedOfferedSkill, setSelectedOfferedSkill] = useState<Skill | null>(null);
+  const [selectedWantedSkill, setSelectedWantedSkill] = useState<Skill | null>(null);
   const [swapMessage, setSwapMessage] = useState('');
   const [matchType, setMatchType] = useState<'perfect' | 'partial' | 'all'>('perfect');
   const [isLoading, setIsLoading] = useState(false);
@@ -134,10 +138,13 @@ export const SkillDiscovery: React.FC = () => {
 
   const initiateSwap = (user: User) => {
     setSelectedUser(user);
+    setSelectedOfferedSkill(null);
+    setSelectedWantedSkill(null);
+    setSwapMessage('');
     setShowSwapModal(true);
   };
 
-  const sendSwapRequest = (offeredSkillId: string, wantedSkillId: string) => {
+  const sendSwapRequest = async (offeredSkillId: string, wantedSkillId: string) => {
     if (!state.currentUser || !selectedUser) return;
 
     const offeredSkill = state.currentUser.skillsOffered.find(s => s.id === offeredSkillId);
@@ -145,22 +152,44 @@ export const SkillDiscovery: React.FC = () => {
 
     if (!offeredSkill || !wantedSkill) return;
 
-    const newRequest: SwapRequest = {
-      id: Date.now().toString(),
-      requesterId: state.currentUser.id,
-      receiverId: selectedUser.id,
-      requesterSkill: offeredSkill,
-      receiverSkill: wantedSkill,
-      status: 'pending',
-      message: swapMessage,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    try {
+      // Create swap request in backend
+      const { swapRequest } = await swapService.createSwap({
+        requesterId: state.currentUser.id,
+        receiverId: selectedUser.id,
+        requesterSkillId: offeredSkillId,
+        receiverSkillId: wantedSkillId,
+        message: swapMessage
+      });
 
-    dispatch({ type: 'ADD_SWAP_REQUEST', payload: newRequest });
-    setShowSwapModal(false);
-    setSelectedUser(null);
-    setSwapMessage('');
+      // Add to local state
+      dispatch({ type: 'ADD_SWAP_REQUEST', payload: swapRequest });
+
+      // Create notification for receiver
+      await notificationService.createNotification({
+        userId: selectedUser.id,
+        title: 'New Skill Swap Request',
+        message: `${state.currentUser.name} wants to swap ${offeredSkill.name} for your ${wantedSkill.name}`,
+        type: 'swap_request',
+        relatedId: swapRequest.id
+      });
+
+      // Create notification for requester
+      await notificationService.createNotification({
+        userId: state.currentUser.id,
+        title: 'Swap Request Sent',
+        message: `Your swap request to ${selectedUser.name} has been sent successfully`,
+        type: 'swap_request',
+        relatedId: swapRequest.id
+      });
+
+      setShowSwapModal(false);
+      setSelectedUser(null);
+      setSwapMessage('');
+    } catch (error) {
+      console.error('Failed to send swap request:', error);
+      // You could add a toast notification here
+    }
   };
 
   return (
@@ -457,19 +486,18 @@ export const SkillDiscovery: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                  Your Skills
+                  Your Skills (Click to select)
                 </h3>
                 <div className="space-y-2">
                   {state.currentUser.skillsOffered.map((skill) => (
                     <div
                       key={skill.id}
-                      className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary cursor-pointer transition-colors"
-                      onClick={() => {
-                        const wantedSkillId = selectedUser.skillsOffered[0]?.id;
-                        if (wantedSkillId) {
-                          sendSwapRequest(skill.id, wantedSkillId);
-                        }
-                      }}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedOfferedSkill?.id === skill.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-primary'
+                      }`}
+                      onClick={() => setSelectedOfferedSkill(skill)}
                     >
                       <h4 className="font-medium text-gray-900 dark:text-white">
                         {skill.name}
@@ -484,19 +512,18 @@ export const SkillDiscovery: React.FC = () => {
 
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                  {selectedUser.name}'s Skills
+                  {selectedUser.name}'s Skills (Click to select)
                 </h3>
                 <div className="space-y-2">
                   {selectedUser.skillsOffered.map((skill) => (
                     <div
                       key={skill.id}
-                      className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-accent cursor-pointer transition-colors"
-                      onClick={() => {
-                        const offeredSkillId = state.currentUser?.skillsOffered[0]?.id;
-                        if (offeredSkillId) {
-                          sendSwapRequest(offeredSkillId, skill.id);
-                        }
-                      }}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedWantedSkill?.id === skill.id
+                          ? 'border-accent bg-accent/10'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-accent'
+                      }`}
+                      onClick={() => setSelectedWantedSkill(skill)}
                     >
                       <h4 className="font-medium text-gray-900 dark:text-white">
                         {skill.name}
@@ -523,9 +550,42 @@ export const SkillDiscovery: React.FC = () => {
               />
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Click on a skill from each column to create a swap proposal.
-            </p>
+            {selectedOfferedSkill && selectedWantedSkill && (
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
+                  Swap Proposal Summary
+                </h4>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  You'll teach <strong>{selectedOfferedSkill.name}</strong> in exchange for learning <strong>{selectedWantedSkill.name}</strong> from {selectedUser.name}.
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSwapModal(false);
+                  setSelectedUser(null);
+                  setSwapMessage('');
+                  setSelectedOfferedSkill(null);
+                  setSelectedWantedSkill(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  if (selectedOfferedSkill && selectedWantedSkill) {
+                    sendSwapRequest(selectedOfferedSkill.id, selectedWantedSkill.id);
+                  }
+                }}
+                disabled={!selectedOfferedSkill || !selectedWantedSkill}
+              >
+                Send Swap Request
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

@@ -107,8 +107,53 @@ router.put('/:id/status', async (req, res) => {
       }
     });
 
-    // If swap is completed, increment swapsCompleted for both users
-    if (status === 'COMPLETED') {
+    // Create notifications based on status change
+    if (status === 'ACCEPTED') {
+      // Notify requester that their swap was accepted
+      await prisma.notification.create({
+        data: {
+          userId: swapRequest.requesterId,
+          title: 'Swap Request Accepted!',
+          message: `${swapRequest.receiver.name} accepted your swap request for ${swapRequest.requesterSkill.name} ↔ ${swapRequest.receiverSkill.name}`,
+          type: 'SWAP_ACCEPTED',
+          relatedId: swapRequest.id
+        }
+      });
+    } else if (status === 'REJECTED') {
+      // Notify requester that their swap was rejected
+      await prisma.notification.create({
+        data: {
+          userId: swapRequest.requesterId,
+          title: 'Swap Request Rejected',
+          message: `${swapRequest.receiver.name} rejected your swap request for ${swapRequest.requesterSkill.name} ↔ ${swapRequest.receiverSkill.name}`,
+          type: 'SWAP_REJECTED',
+          relatedId: swapRequest.id
+        }
+      });
+    } else if (status === 'COMPLETED') {
+      // Notify both users that the swap is completed
+      await Promise.all([
+        prisma.notification.create({
+          data: {
+            userId: swapRequest.requesterId,
+            title: 'Swap Completed!',
+            message: `Your swap with ${swapRequest.receiver.name} for ${swapRequest.requesterSkill.name} ↔ ${swapRequest.receiverSkill.name} has been completed!`,
+            type: 'SWAP_COMPLETED',
+            relatedId: swapRequest.id
+          }
+        }),
+        prisma.notification.create({
+          data: {
+            userId: swapRequest.receiverId,
+            title: 'Swap Completed!',
+            message: `Your swap with ${swapRequest.requester.name} for ${swapRequest.requesterSkill.name} ↔ ${swapRequest.receiverSkill.name} has been completed!`,
+            type: 'SWAP_COMPLETED',
+            relatedId: swapRequest.id
+          }
+        })
+      ]);
+
+      // Increment swapsCompleted for both users
       await Promise.all([
         prisma.user.update({
           where: { id: swapRequest.requesterId },

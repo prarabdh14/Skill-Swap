@@ -6,6 +6,7 @@ import { userRoutes } from './routes/users';
 import { skillRoutes } from './routes/skills';
 import { swapRoutes } from './routes/swaps';
 import { messageRoutes } from './routes/messages';
+import { notificationRoutes } from './routes/notifications';
 import { adminRoutes } from './routes/admin';
 
 // Load environment variables
@@ -33,6 +34,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/swaps', swapRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Error handling middleware

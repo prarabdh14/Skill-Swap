@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { AppState, User, SwapRequest, Rating, Message, AdminAnnouncement } from '../types';
+import { AppState, User, SwapRequest, Rating, Message, Notification, AdminAnnouncement } from '../types';
 import { authService, getAuthToken } from '../services';
 import { userService } from '../services/userService';
 
@@ -17,6 +17,9 @@ type AppAction =
   | { type: 'ADD_RATING'; payload: Rating }
   | { type: 'ADD_MESSAGE'; payload: Message }
   | { type: 'MARK_MESSAGE_READ'; payload: string }
+  | { type: 'ADD_NOTIFICATION'; payload: Notification }
+  | { type: 'MARK_NOTIFICATION_READ'; payload: string }
+  | { type: 'SET_NOTIFICATIONS'; payload: Notification[] }
   | { type: 'ADD_ANNOUNCEMENT'; payload: AdminAnnouncement }
   | { type: 'TOGGLE_ANNOUNCEMENT'; payload: string }
   | { type: 'BAN_USER'; payload: string }
@@ -28,6 +31,7 @@ const initialState: AppState = {
   swapRequests: [],
   ratings: [],
   messages: [],
+  notifications: [],
   announcements: [],
   theme: 'system'
 };
@@ -83,6 +87,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
         messages: state.messages.map(message =>
           message.id === action.payload ? { ...message, isRead: true } : message
         )
+      };
+    
+    case 'ADD_NOTIFICATION':
+      return {
+        ...state,
+        notifications: [...state.notifications, action.payload]
+      };
+    
+    case 'MARK_NOTIFICATION_READ':
+      return {
+        ...state,
+        notifications: state.notifications.map(notification =>
+          notification.id === action.payload ? { ...notification, isRead: true } : notification
+        )
+      };
+    
+    case 'SET_NOTIFICATIONS':
+      return {
+        ...state,
+        notifications: action.payload
       };
     
     case 'ADD_ANNOUNCEMENT':
