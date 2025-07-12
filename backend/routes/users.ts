@@ -41,7 +41,7 @@ const formatUserData = (user: any) => ({
 // Get all users (for discovery)
 router.get('/', async (req, res) => {
   try {
-    const { search, category, level } = req.query;
+    const { search, category, level, skill, matchType } = req.query;
 
     let whereClause: any = {
       isPublic: true,
@@ -82,6 +82,16 @@ router.get('/', async (req, res) => {
           const levelMatch = !level || skill.level === level;
           return categoryMatch && levelMatch;
         });
+      });
+    }
+
+    // Filter by specific skill if provided
+    if (skill) {
+      filteredUsers = filteredUsers.filter(user => {
+        return user.userSkills.some(userSkill => 
+          userSkill.skill.name.toLowerCase().includes((skill as string).toLowerCase()) ||
+          userSkill.skill.category.toLowerCase().includes((skill as string).toLowerCase())
+        );
       });
     }
 

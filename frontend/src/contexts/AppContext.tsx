@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AppState, User, SwapRequest, Rating, Message, AdminAnnouncement } from '../types';
 import { authService, getAuthToken } from '../services';
+import { userService } from '../services/userService';
 
 interface AppContextType {
   state: AppState;
@@ -9,6 +10,7 @@ interface AppContextType {
 
 type AppAction =
   | { type: 'SET_CURRENT_USER'; payload: User | null }
+  | { type: 'SET_USERS'; payload: User[] }
   | { type: 'UPDATE_USER'; payload: User }
   | { type: 'ADD_SWAP_REQUEST'; payload: SwapRequest }
   | { type: 'UPDATE_SWAP_REQUEST'; payload: SwapRequest }
@@ -36,6 +38,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_CURRENT_USER':
       return { ...state, currentUser: action.payload };
+    
+    case 'SET_USERS':
+      return { ...state, users: action.payload };
     
     case 'UPDATE_USER':
       return {
@@ -134,9 +139,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (token) {
       // Verify token and set current user
       authService.verifyToken()
-        .then(({ user }) => {
-          dispatch({ type: 'SET_CURRENT_USER', payload: user });
-        })
+                  .then(({ user }) => {
+            dispatch({ type: 'SET_CURRENT_USER', payload: user });
+            // Load all users for discovery
+            userService.getUsers().then((users: User[]) => {
+              dispatch({ type: 'SET_USERS', payload: users });
+            }).catch(error => {
+              console.error('Failed to load users:', error);
+            });
+          })
         .catch(() => {
           // Token is invalid, remove it
           authService.signOut();
