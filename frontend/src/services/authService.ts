@@ -14,6 +14,10 @@ export interface SignInData {
   password: string;
 }
 
+export interface GoogleAuthData {
+  credential: string;
+}
+
 export interface AuthResponse {
   message: string;
   user: User;
@@ -78,5 +82,20 @@ export const authService = {
   // Sign out
   signOut(): void {
     removeAuthToken();
+  },
+
+  // Google OAuth
+  async signInWithGoogle(data: GoogleAuthData): Promise<AuthResponse> {
+    const response = await apiFetch('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+
+    const result = await handleResponse<AuthResponse>(response);
+    setAuthToken(result.token);
+    return {
+      ...result,
+      user: formatUserData(result.user)
+    };
   }
 }; 
