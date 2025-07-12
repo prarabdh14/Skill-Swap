@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
-import { Modal } from '../ui/Modal';
+import { SkillModal } from '../ui/SkillModal';
 import { Skill } from '../../types';
-import { mockSkills } from '../../data/mockData';
+import { userService } from '../../services/userService';
 
 export const UserProfile: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -16,12 +16,61 @@ export const UserProfile: React.FC = () => {
   const [skillType, setSkillType] = useState<'offered' | 'wanted'>('offered');
   const [editedUser, setEditedUser] = useState(state.currentUser);
 
-  if (!state.currentUser) return null;
+  // Add error handling for missing user data
+  if (!state.currentUser) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center text-gray-600 dark:text-gray-400">
+              Loading user profile...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const handleSave = () => {
+  // Ensure we have the required user data
+  const user = state.currentUser;
+  const skillsOffered = user.skillsOffered || [];
+  const skillsWanted = user.skillsWanted || [];
+  const badges = user.badges || [];
+  const createdAt = user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt);
+
+  const handleSave = async () => {
     if (editedUser) {
-      dispatch({ type: 'UPDATE_USER', payload: editedUser });
-      setIsEditing(false);
+      try {
+        // Update user profile data
+        await userService.updateProfile(editedUser.id, {
+          name: editedUser.name,
+          location: editedUser.location,
+          profilePhoto: editedUser.profilePhoto,
+          availability: editedUser.availability,
+          isPublic: editedUser.isPublic
+        });
+
+        // Update user skills
+        const { user: updatedUser } = await userService.updateSkills(editedUser.id, {
+          skillsOffered: editedUser.skillsOffered.map(skill => skill.id),
+          skillsWanted: editedUser.skillsWanted.map(skill => skill.id)
+        });
+
+        // Update the user data with the response from the backend
+        const formattedUser = {
+          ...updatedUser,
+          createdAt: new Date(updatedUser.createdAt),
+          badges: updatedUser.badges?.map((badge: any) => ({
+            ...badge,
+            unlockedAt: badge.unlockedAt ? new Date(badge.unlockedAt) : undefined
+          })) || []
+        };
+
+        dispatch({ type: 'UPDATE_USER', payload: formattedUser });
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Error saving profile:', error);
+      }
     }
   };
 
@@ -65,9 +114,10 @@ export const UserProfile: React.FC = () => {
     }
   };
 
-  const availableSkills = mockSkills.filter(skill => 
-    !editedUser?.[skillType === 'offered' ? 'skillsOffered' : 'skillsWanted']?.some(s => s.id === skill.id)
-  );
+  // Get current skills for the selected type
+  const currentSkills = skillType === 'offered' 
+    ? (editedUser?.skillsOffered || skillsOffered)
+    : (editedUser?.skillsWanted || skillsWanted);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -88,7 +138,9 @@ export const UserProfile: React.FC = () => {
                   size="sm"
                   icon={Camera}
                   className="absolute bottom-2 right-2 rounded-full w-8 h-8 p-0"
-                />
+                >
+                  <Camera size={16} />
+                </Button>
               )}
             </div>
             
@@ -101,7 +153,7 @@ export const UserProfile: React.FC = () => {
                 />
               ) : (
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {state.currentUser.name}
+                  {user.name}
                 </h1>
               )}
               
@@ -116,20 +168,20 @@ export const UserProfile: React.FC = () => {
                       className="w-40"
                     />
                   ) : (
-                    <span>{state.currentUser.location || 'Location not set'}</span>
+                    <span>{user.location || 'Location not set'}</span>
                   )}
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar size={16} />
-                  <span>Joined {state.currentUser.createdAt.toLocaleDateString()}</span>
+                  <span>Joined {createdAt.toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Star size={16} className="text-yellow-500" />
-                  <span>{state.currentUser.rating.toFixed(1)} rating</span>
+                  <span>{user.rating.toFixed(1)} rating</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Trophy size={16} className="text-accent" />
-                  <span>{state.currentUser.swapsCompleted} swaps completed</span>
+                  <span>{user.swapsCompleted} swaps completed</span>
                 </div>
               </div>
             </div>
@@ -170,7 +222,6 @@ export const UserProfile: React.FC = () => {
                   setSkillType('offered');
                   setShowSkillModal(true);
                 }}
-                disabled={!isEditing}
               >
                 Add Skill
               </Button>
@@ -178,7 +229,7 @@ export const UserProfile: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(editedUser?.skillsOffered || []).map((skill) => (
+              {(editedUser?.skillsOffered || skillsOffered).map((skill) => (
                 <div
                   key={skill.id}
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -203,11 +254,13 @@ export const UserProfile: React.FC = () => {
                       icon={X}
                       onClick={() => removeSkill(skill.id, 'offered')}
                       className="text-error hover:bg-error/10"
-                    />
+                    >
+                      <X size={16} />
+                    </Button>
                   )}
                 </div>
               ))}
-              {(editedUser?.skillsOffered || []).length === 0 && (
+              {(editedUser?.skillsOffered || skillsOffered).length === 0 && (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                   No skills offered yet
                 </p>
@@ -231,7 +284,6 @@ export const UserProfile: React.FC = () => {
                   setSkillType('wanted');
                   setShowSkillModal(true);
                 }}
-                disabled={!isEditing}
               >
                 Add Skill
               </Button>
@@ -239,7 +291,7 @@ export const UserProfile: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(editedUser?.skillsWanted || []).map((skill) => (
+              {(editedUser?.skillsWanted || skillsWanted).map((skill) => (
                 <div
                   key={skill.id}
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -264,11 +316,13 @@ export const UserProfile: React.FC = () => {
                       icon={X}
                       onClick={() => removeSkill(skill.id, 'wanted')}
                       className="text-error hover:bg-error/10"
-                    />
+                    >
+                      <X size={16} />
+                    </Button>
                   )}
                 </div>
               ))}
-              {(editedUser?.skillsWanted || []).length === 0 && (
+              {(editedUser?.skillsWanted || skillsWanted).length === 0 && (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                   No skills wanted yet
                 </p>
@@ -287,7 +341,7 @@ export const UserProfile: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {state.currentUser.badges.map((badge) => (
+            {badges.map((badge) => (
               <div
                 key={badge.id}
                 className="flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg"
@@ -306,42 +360,23 @@ export const UserProfile: React.FC = () => {
                 </div>
               </div>
             ))}
+            {badges.length === 0 && (
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4 col-span-full">
+                No achievements yet
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Add Skill Modal */}
-      <Modal
-        isOpen={showSkillModal}
-        onClose={() => setShowSkillModal(false)}
-        title={`Add Skill ${skillType === 'offered' ? 'You Offer' : 'You Want to Learn'}`}
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Choose a skill to add to your {skillType === 'offered' ? 'offered' : 'wanted'} skills:
-          </p>
-          <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
-            {availableSkills.map((skill) => (
-              <button
-                key={skill.id}
-                onClick={() => addSkill(skill)}
-                className="flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-              >
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    {skill.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {skill.category} • {skill.level}
-                  </p>
-                </div>
-                <Plus size={16} className="text-primary" />
-              </button>
-            ))}
-          </div>
-        </div>
-      </Modal>
+              {/* Add Skill Modal */}
+        <SkillModal
+          isOpen={showSkillModal}
+          onClose={() => setShowSkillModal(false)}
+          onAddSkill={(skill) => addSkill(skill)}
+          skillType={skillType}
+          existingSkills={currentSkills}
+        />
     </div>
   );
 };

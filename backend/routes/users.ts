@@ -241,4 +241,94 @@ router.delete('/:id/skills/:skillId', async (req, res) => {
   }
 });
 
+// Update user skills (bulk update)
+router.put('/:id/skills', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { skillsOffered, skillsWanted } = req.body;
+
+    // Delete all existing user skills
+    await prisma.userSkill.deleteMany({
+      where: { userId: id }
+    });
+
+    // Add new offered skills
+    if (skillsOffered && skillsOffered.length > 0) {
+      await prisma.userSkill.createMany({
+        data: skillsOffered.map((skillId: string) => ({
+          userId: id,
+          skillId,
+          isOffered: true
+        }))
+      });
+    }
+
+    // Add new wanted skills
+    if (skillsWanted && skillsWanted.length > 0) {
+      await prisma.userSkill.createMany({
+        data: skillsWanted.map((skillId: string) => ({
+          userId: id,
+          skillId,
+          isOffered: false
+        }))
+      });
+    }
+
+    // Get updated user with skills
+    const updatedUser = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        userSkills: {
+          include: {
+            skill: true
+          }
+        },
+        badges: {
+          include: {
+            badge: true
+          }
+        }
+      }
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Format user data
+    const userData = {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      location: updatedUser.location,
+      profilePhoto: updatedUser.profilePhoto,
+      availability: updatedUser.availability,
+      isPublic: updatedUser.isPublic,
+      rating: updatedUser.rating,
+      swapsCompleted: updatedUser.swapsCompleted,
+      isAdmin: updatedUser.isAdmin,
+      isBanned: updatedUser.isBanned,
+      createdAt: updatedUser.createdAt,
+      skillsOffered: updatedUser.userSkills
+        .filter(us => us.isOffered)
+        .map(us => us.skill),
+      skillsWanted: updatedUser.userSkills
+        .filter(us => !us.isOffered)
+        .map(us => us.skill),
+      badges: updatedUser.badges.map(ub => ({
+        ...ub.badge,
+        unlockedAt: ub.unlockedAt
+      }))
+    };
+
+    res.json({
+      message: 'Skills updated successfully',
+      user: userData
+    });
+  } catch (error) {
+    console.error('Update skills error:', error);
+    res.status(500).json({ error: 'Failed to update skills' });
+  }
+});
+
 export { router as userRoutes }; 

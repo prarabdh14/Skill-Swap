@@ -100,6 +100,52 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Create custom skill for user
+router.post('/custom', async (req, res) => {
+  try {
+    const { name, category, level, description } = req.body;
+
+    // Validate input
+    if (!name || !category || !level) {
+      return res.status(400).json({ error: 'Name, category, and level are required' });
+    }
+
+    // Check if skill already exists
+    const existingSkill = await prisma.skill.findFirst({
+      where: {
+        name: name,
+        category: category
+      }
+    });
+
+    if (existingSkill) {
+      // Return existing skill if it already exists
+      return res.json({
+        message: 'Skill already exists',
+        skill: existingSkill
+      });
+    }
+
+    // Create new custom skill
+    const skill = await prisma.skill.create({
+      data: {
+        name,
+        category,
+        level,
+        description
+      }
+    });
+
+    res.status(201).json({
+      message: 'Custom skill created successfully',
+      skill
+    });
+  } catch (error) {
+    console.error('Create custom skill error:', error);
+    res.status(500).json({ error: 'Failed to create custom skill' });
+  }
+});
+
 // Get skill categories
 router.get('/categories/list', async (req, res) => {
   try {

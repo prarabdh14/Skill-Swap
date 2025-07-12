@@ -36,6 +36,15 @@ export const skillService = {
     return handleResponse<{ message: string; skill: Skill }>(response);
   },
 
+  // Create custom skill for user
+  async createCustomSkill(data: CreateSkillData): Promise<{ message: string; skill: Skill }> {
+    const response = await apiFetch('/skills/custom', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return handleResponse<{ message: string; skill: Skill }>(response);
+  },
+
   // Get skill categories
   async getCategories(): Promise<string[]> {
     const response = await apiFetch('/skills/categories/list');

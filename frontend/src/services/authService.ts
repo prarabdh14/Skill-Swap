@@ -20,6 +20,16 @@ export interface AuthResponse {
   token: string;
 }
 
+// Helper function to convert backend user data to frontend format
+const formatUserData = (userData: any): User => ({
+  ...userData,
+  createdAt: new Date(userData.createdAt),
+  badges: userData.badges?.map((badge: any) => ({
+    ...badge,
+    unlockedAt: badge.unlockedAt ? new Date(badge.unlockedAt) : undefined
+  })) || []
+});
+
 export const authService = {
   // Sign up
   async signUp(data: SignUpData): Promise<AuthResponse> {
@@ -35,7 +45,10 @@ export const authService = {
 
     const result = await handleResponse<AuthResponse>(response);
     setAuthToken(result.token);
-    return result;
+    return {
+      ...result,
+      user: formatUserData(result.user)
+    };
   },
 
   // Sign in
@@ -47,13 +60,19 @@ export const authService = {
 
     const result = await handleResponse<AuthResponse>(response);
     setAuthToken(result.token);
-    return result;
+    return {
+      ...result,
+      user: formatUserData(result.user)
+    };
   },
 
   // Verify token
   async verifyToken(): Promise<{ user: User }> {
     const response = await apiFetch('/auth/verify');
-    return handleResponse<{ user: User }>(response);
+    const result = await handleResponse<{ user: User }>(response);
+    return {
+      user: formatUserData(result.user)
+    };
   },
 
   // Sign out
