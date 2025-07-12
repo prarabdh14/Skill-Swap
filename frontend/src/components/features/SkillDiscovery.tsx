@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, MapPin, Star, Clock, Users } from 'lucide-react';
+import { Search, Filter, MapPin, Star, Clock, Users, Grid3X3, Box } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -7,6 +7,9 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { User, SwapRequest } from '../../types';
+import { SwapRequestIcon, FeedbackIcon, LikeIcon, ShareIcon, BookmarkIcon } from '../ui/AnimatedIcon';
+import { ThreeDCarousel } from './ThreeDCarousel';
+import { SectionParallax } from '../ui/ParallaxBackground';
 
 export const SkillDiscovery: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -17,6 +20,7 @@ export const SkillDiscovery: React.FC = () => {
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [swapMessage, setSwapMessage] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | '3d'>('grid');
 
   const categories = ['Technical & Programming', 'Creative Arts', 'Music & Audio', 'Languages', 'Lifestyle & Wellness', 'Business & Professional', 'Crafts & DIY', 'Sports & Recreation', 'Academic & Education'];
   const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
@@ -75,9 +79,10 @@ export const SkillDiscovery: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
+      {/* Search and Filters with Parallax */}
+      <SectionParallax>
+        <Card>
+          <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Input
@@ -87,13 +92,31 @@ export const SkillDiscovery: React.FC = () => {
                 icon={Search}
               />
             </div>
-            <Button
-              variant="outline"
-              icon={Filter}
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              Filters
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={viewMode === 'grid' ? 'primary' : 'outline'}
+                icon={Grid3X3}
+                onClick={() => setViewMode('grid')}
+                size="sm"
+              >
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === '3d' ? 'primary' : 'outline'}
+                icon={Box}
+                onClick={() => setViewMode('3d')}
+                size="sm"
+              >
+                3D View
+              </Button>
+              <Button
+                variant="outline"
+                icon={Filter}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filters
+              </Button>
+            </div>
           </div>
 
           {showFilters && (
@@ -133,88 +156,113 @@ export const SkillDiscovery: React.FC = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </SectionParallax>
 
       {/* Results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredUsers.map((user) => (
-          <Card key={user.id} hover className="overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <img
-                  src={user.profilePhoto || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                  alt={user.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {user.name}
-                  </h3>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <MapPin size={12} />
-                    <span>{user.location || 'Location not set'}</span>
+      {viewMode === '3d' ? (
+        <ThreeDCarousel
+          users={filteredUsers}
+          onUserSelect={(user) => {
+            setSelectedUser(user);
+            setShowSwapModal(true);
+          }}
+          className="mb-6"
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredUsers.map((user) => (
+            <Card key={user.id} hover className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={user.profilePhoto || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                    alt={user.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      {user.name}
+                    </h3>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin size={12} />
+                      <span>{user.location || 'Location not set'}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-1">
-                  <Star size={14} className="text-yellow-500" />
-                  <span>{user.rating.toFixed(1)}</span>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-1">
+                    <Star size={14} className="text-yellow-500" />
+                    <span>{user.rating.toFixed(1)}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Users size={14} />
+                    <span>{user.swapsCompleted} swaps</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <Users size={14} />
-                  <span>{user.swapsCompleted} swaps</span>
-                </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Skills Offered
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {user.skillsOffered.slice(0, 3).map((skill) => (
-                    <Badge key={skill.id} variant="primary" size="sm">
-                      {skill.name}
-                    </Badge>
-                  ))}
-                  {user.skillsOffered.length > 3 && (
-                    <Badge variant="gray" size="sm">
-                      +{user.skillsOffered.length - 3} more
-                    </Badge>
-                  )}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    Skills Offered
+                  </h4>
+                  <div className="flex flex-wrap gap-1">
+                    {user.skillsOffered.slice(0, 3).map((skill) => (
+                      <Badge key={skill.id} variant="primary" size="sm">
+                        {skill.name}
+                      </Badge>
+                    ))}
+                    {user.skillsOffered.length > 3 && (
+                      <Badge variant="gray" size="sm">
+                        +{user.skillsOffered.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Availability
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {user.availability.map((time) => (
-                    <Badge key={time} variant="secondary" size="sm">
-                      <Clock size={12} className="mr-1" />
-                      {time}
-                    </Badge>
-                  ))}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    Availability
+                  </h4>
+                  <div className="flex flex-wrap gap-1">
+                    {user.availability.map((time) => (
+                      <Badge key={time} variant="secondary" size="sm">
+                        <Clock size={12} className="mr-1" />
+                        {time}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => initiateSwap(user)}
-                className="w-full"
-                disabled={!state.currentUser?.skillsOffered.length}
-              >
-                Propose Skill Swap
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <SwapRequestIcon
+                      onClick={() => initiateSwap(user)}
+                      disabled={!state.currentUser?.skillsOffered.length}
+                    />
+                    <FeedbackIcon
+                      onClick={() => console.log('Send feedback to', user.name)}
+                    />
+                    <LikeIcon
+                      onClick={() => console.log('Like', user.name)}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <ShareIcon
+                      onClick={() => console.log('Share', user.name)}
+                    />
+                    <BookmarkIcon
+                      onClick={() => console.log('Bookmark', user.name)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {filteredUsers.length === 0 && (
         <Card>

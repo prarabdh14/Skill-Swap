@@ -5,14 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#22BFFD',
-        secondary: '#00374C',
-        accent: '#FF7C43',
-        success: '#27AE60',
+        primary: '#004030',
+        secondary: '#4A9782',
+        accent: '#DCD0A8',
+        success: '#4A9782',
         error: '#E74C3C',
         warning: '#F39C12',
-        'bg-light': '#F5F7FA',
-        'bg-dark': '#0D0D0D',
+        'bg-light': '#FFF9E5',
+        'bg-dark': '#004030',
+        'text-primary': '#004030',
+        'text-secondary': '#4A9782',
+        'text-accent': '#DCD0A8',
+        'text-light': '#FFF9E5',
+        'border-primary': '#004030',
+        'border-secondary': '#4A9782',
+        'border-accent': '#DCD0A8',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

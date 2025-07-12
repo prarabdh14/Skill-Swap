@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, MapPin, Calendar, Star, Trophy, Plus, Edit2, Save, X } from 'lucide-react';
+import { Camera, MapPin, Calendar, Star, Trophy, Plus, Edit2, Save, X, Mail, Phone, Globe } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -8,6 +8,7 @@ import { Badge } from '../ui/Badge';
 import { SkillModal } from '../ui/SkillModal';
 import { Skill } from '../../types';
 import { userService } from '../../services/userService';
+import { ThreeDProfileCard } from './ThreeDProfileCard';
 
 export const UserProfile: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -121,90 +122,145 @@ export const UserProfile: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Profile Header */}
-      <Card className="overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary via-accent to-secondary"></div>
-        <CardContent className="relative pt-0">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6 -mt-16">
-            <div className="relative">
-              <img
-                src={editedUser?.profilePhoto || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                alt={editedUser?.name}
-                className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-              />
-              {isEditing && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon={Camera}
-                  className="absolute bottom-2 right-2 rounded-full w-8 h-8 p-0"
-                >
-                  <Camera size={16} />
-                </Button>
-              )}
-            </div>
-            
-            <div className="flex-1 space-y-2">
-              {isEditing ? (
-                <Input
-                  value={editedUser?.name || ''}
-                  onChange={(value) => setEditedUser(prev => prev ? { ...prev, name: value } : null)}
-                  className="text-2xl font-bold"
-                />
-              ) : (
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {user.name}
-                </h1>
-              )}
-              
-              <div className="flex flex-wrap items-center gap-4 text-gray-600 dark:text-gray-400">
-                <div className="flex items-center space-x-1">
-                  <MapPin size={16} />
-                  {isEditing ? (
-                    <Input
-                      value={editedUser?.location || ''}
-                      onChange={(value) => setEditedUser(prev => prev ? { ...prev, location: value } : null)}
-                      placeholder="Add location"
-                      className="w-40"
+      {/* 3D Profile Card */}
+      <div className="h-96">
+        <ThreeDProfileCard
+          front={
+            <Card className="h-full overflow-hidden">
+              <div className="h-32 bg-gradient-to-r from-primary via-accent to-secondary"></div>
+              <CardContent className="relative pt-0 h-full">
+                <div className="flex flex-col items-center text-center space-y-4 -mt-16">
+                  <div className="relative">
+                    <img
+                      src={editedUser?.profilePhoto || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                      alt={editedUser?.name}
+                      className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
                     />
-                  ) : (
-                    <span>{user.location || 'Location not set'}</span>
-                  )}
+                    {isEditing && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={Camera}
+                        className="absolute bottom-2 right-2 rounded-full w-8 h-8 p-0"
+                      >
+                        <Camera size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {isEditing ? (
+                      <Input
+                        value={editedUser?.name || ''}
+                        onChange={(value) => setEditedUser(prev => prev ? { ...prev, name: value } : null)}
+                        className="text-2xl font-bold text-center"
+                      />
+                    ) : (
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {user.name}
+                      </h1>
+                    )}
+                    
+                    <div className="flex items-center justify-center space-x-1 text-gray-600 dark:text-gray-400">
+                      <MapPin size={16} />
+                      {isEditing ? (
+                        <Input
+                          value={editedUser?.location || ''}
+                          onChange={(value) => setEditedUser(prev => prev ? { ...prev, location: value } : null)}
+                          placeholder="Add location"
+                          className="w-40"
+                        />
+                      ) : (
+                        <span>{user.location || 'Location not set'}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    {isEditing ? (
+                      <>
+                        <Button variant="primary" onClick={handleSave} icon={Save}>
+                          Save
+                        </Button>
+                        <Button variant="outline" onClick={handleCancel} icon={X}>
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="outline" onClick={() => setIsEditing(true)} icon={Edit2}>
+                        Edit Profile
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <Calendar size={16} />
-                  <span>Joined {createdAt.toLocaleDateString()}</span>
+              </CardContent>
+            </Card>
+          }
+          back={
+            <Card className="h-full bg-gradient-to-br from-light to-accent">
+              <CardContent className="h-full flex flex-col justify-center space-y-6 p-8">
+                <div className="text-center space-y-4">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {user.name}
+                  </h2>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Star size={16} className="text-yellow-500" />
+                      <span>{user.rating.toFixed(1)} rating</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Trophy size={16} className="text-accent" />
+                      <span>{user.swapsCompleted} swaps</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar size={16} />
+                      <span>Joined {createdAt.toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin size={16} />
+                      <span>{user.location || 'Location not set'}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <Star size={16} className="text-yellow-500" />
-                  <span>{user.rating.toFixed(1)} rating</span>
+                
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Top Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {skillsOffered.slice(0, 4).map((skill) => (
+                      <Badge key={skill.id} variant="primary" size="sm">
+                        {skill.name}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <Trophy size={16} className="text-accent" />
-                  <span>{user.swapsCompleted} swaps completed</span>
+                
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Contact</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Mail size={14} />
+                      <span>{user.email}</span>
+                    </div>
+                    {user.phone && (
+                      <div className="flex items-center space-x-2">
+                        <Phone size={14} />
+                        <span>{user.phone}</span>
+                      </div>
+                    )}
+                    {user.website && (
+                      <div className="flex items-center space-x-2">
+                        <Globe size={14} />
+                        <span>{user.website}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-            
-            <div className="flex space-x-2">
-              {isEditing ? (
-                <>
-                  <Button variant="primary" onClick={handleSave} icon={Save}>
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={handleCancel} icon={X}>
-                    Cancel
-                  </Button>
-                </>
-              ) : (
-                <Button variant="outline" onClick={() => setIsEditing(true)} icon={Edit2}>
-                  Edit Profile
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          }
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Skills Offered */}
