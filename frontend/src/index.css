@@ -1,3 +1,47 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom Color Variables */
+:root {
+  --color-primary: #004030;
+  --color-secondary: #4A9782;
+  --color-accent: #DCD0A8;
+  --color-light: #FFF9E5;
+}
+
+/* Base Styles with New Theme */
+body {
+  background-color: var(--color-light);
+  color: var(--color-primary);
+}
+
+/* 3D Profile Card Styles */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Custom Component Styles */
+.gradient-primary {
+  background: linear-gradient(135deg, #004030 0%, #4A9782 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #4A9782 0%, #DCD0A8 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #DCD0A8 0%, #FFF9E5 100%);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #FFF9E5 0%, #DCD0A8 50%, #4A9782 100%);
+}
