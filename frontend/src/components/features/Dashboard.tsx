@@ -4,6 +4,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { SectionParallax } from '../ui/ParallaxBackground';
 
 interface DashboardProps {
   onViewChange: (view: string) => void;
@@ -81,36 +82,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewChange }) => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <Card className="bg-gradient-to-r from-primary to-accent text-white overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold mb-2">
-                Welcome back, {state.currentUser.name}! 👋
-              </h1>
-              <p className="text-blue-100 mb-4">
-                Ready to learn something new or share your skills?
-              </p>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-1">
-                  <Star className="text-yellow-300" size={16} />
-                  <span>{state.currentUser.rating.toFixed(1)} rating</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Trophy className="text-yellow-300" size={16} />
-                  <span>{state.currentUser.swapsCompleted} swaps completed</span>
+      {/* Welcome Section with Parallax */}
+      <SectionParallax>
+        <Card className="bg-gradient-to-r from-primary to-accent text-white overflow-hidden relative">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">
+                  Welcome back, {state.currentUser.name}! 👋
+                </h1>
+                <p className="text-blue-100 mb-4">
+                  Ready to learn something new or share your skills?
+                </p>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-1">
+                    <Star className="text-yellow-300" size={16} />
+                    <span>{state.currentUser.rating.toFixed(1)} rating</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Trophy className="text-yellow-300" size={16} />
+                    <span>{state.currentUser.swapsCompleted} swaps completed</span>
+                  </div>
                 </div>
               </div>
+              <div className="hidden sm:block">
+                <Button variant="secondary" onClick={() => onViewChange('discover')}>
+                  Discover Skills
+                </Button>
+              </div>
             </div>
-            <div className="hidden sm:block">
-              <Button variant="secondary" onClick={() => onViewChange('discover')}>
-                Discover Skills
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </SectionParallax>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

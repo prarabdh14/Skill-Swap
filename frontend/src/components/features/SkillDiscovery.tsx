@@ -1,5 +1,7 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, MapPin, Star, Clock, Users, Target, ArrowRight } from 'lucide-react';
+
 import { useApp } from '../../contexts/AppContext';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -8,6 +10,10 @@ import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { User, SwapRequest } from '../../types';
 import { userService } from '../../services/userService';
+import { SwapRequestIcon, FeedbackIcon, LikeIcon, ShareIcon, BookmarkIcon } from '../ui/AnimatedIcon';
+import { ThreeDCarousel } from './ThreeDCarousel';
+import { SectionParallax } from '../ui/ParallaxBackground';
+
 
 export const SkillDiscovery: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -20,7 +26,6 @@ export const SkillDiscovery: React.FC = () => {
   const [swapMessage, setSwapMessage] = useState('');
   const [matchType, setMatchType] = useState<'perfect' | 'partial' | 'all'>('perfect');
   const [isLoading, setIsLoading] = useState(false);
-
   const categories = ['Technical & Programming', 'Creative Arts', 'Music & Audio', 'Languages', 'Lifestyle & Wellness', 'Business & Professional', 'Crafts & DIY', 'Sports & Recreation', 'Academic & Education'];
   const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
@@ -159,9 +164,10 @@ export const SkillDiscovery: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
+      {/* Search and Filters with Parallax */}
+      <SectionParallax>
+        <Card>
+          <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Input
@@ -171,13 +177,31 @@ export const SkillDiscovery: React.FC = () => {
                 icon={Search}
               />
             </div>
-            <Button
-              variant="outline"
-              icon={Filter}
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              Filters
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={viewMode === 'grid' ? 'primary' : 'outline'}
+                icon={Grid3X3}
+                onClick={() => setViewMode('grid')}
+                size="sm"
+              >
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === '3d' ? 'primary' : 'outline'}
+                icon={Box}
+                onClick={() => setViewMode('3d')}
+                size="sm"
+              >
+                3D View
+              </Button>
+              <Button
+                variant="outline"
+                icon={Filter}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filters
+              </Button>
+            </div>
           </div>
 
           {showFilters && (
@@ -231,7 +255,8 @@ export const SkillDiscovery: React.FC = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </SectionParallax>
 
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -286,23 +311,22 @@ export const SkillDiscovery: React.FC = () => {
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                     <MapPin size={12} />
                     <span>{user.location || 'Location not set'}</span>
+        
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-1">
-                  <Star size={14} className="text-yellow-500" />
-                  <span>{user.rating.toFixed(1)}</span>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-1">
+                    <Star size={14} className="text-yellow-500" />
+                    <span>{user.rating.toFixed(1)}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Users size={14} />
+                    <span>{user.swapsCompleted} swaps</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <Users size={14} />
-                  <span>{user.swapsCompleted} swaps</span>
-                </div>
-              </div>
-
               {/* Matching Skills Section */}
               {(user.matchingSkillsOffered.length > 0 || user.matchingSkillsWanted.length > 0) && (
                 <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
@@ -355,8 +379,8 @@ export const SkillDiscovery: React.FC = () => {
                       +{user.skillsOffered.length - 3} more
                     </Badge>
                   )}
+
                 </div>
-              </div>
 
               <div>
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -387,8 +411,8 @@ export const SkillDiscovery: React.FC = () => {
                       {time}
                     </Badge>
                   ))}
+
                 </div>
-              </div>
 
               <Button
                 variant="primary"
@@ -405,6 +429,7 @@ export const SkillDiscovery: React.FC = () => {
         )}
       </div>
 
+         
       {!isLoading && filteredUsers.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">

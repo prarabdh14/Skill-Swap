@@ -11,6 +11,7 @@ import { Messages } from './components/features/Messages';
 import { AdminPanel } from './components/features/AdminPanel';
 import { AuthContainer } from './components/auth/AuthContainer';
 import { useApp } from './contexts/AppContext';
+import { ParallaxBackground, SectionParallax } from './components/ui/ParallaxBackground';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -48,14 +49,16 @@ function AppContent() {
 
   // Show main app when user is authenticated
   return (
-    <div className="min-h-screen bg-bg-light dark:bg-bg-dark transition-colors duration-300">
-      <Header currentView={currentView} onViewChange={setCurrentView} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-fade-in">
-          {renderView()}
-        </div>
-      </main>
-    </div>
+    <ParallaxBackground intensity="medium">
+      <div className="min-h-screen transition-colors duration-300">
+        <Header currentView={currentView} onViewChange={setCurrentView} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-fade-in">
+            {renderView()}
+          </div>
+        </main>
+      </div>
+    </ParallaxBackground>
   );
 }
 
