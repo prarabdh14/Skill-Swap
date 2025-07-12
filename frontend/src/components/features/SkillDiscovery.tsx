@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, MapPin, Star, Clock, Users, Target, ArrowRight } from 'lucide-react';
+import { Search, Filter, MapPin, Star, Clock, Users, Target, ArrowRight, Grid3X3, Box } from 'lucide-react';
 
 import { useApp } from '../../contexts/AppContext';
 import { Card, CardContent, CardHeader } from '../ui/Card';
@@ -26,6 +26,7 @@ export const SkillDiscovery: React.FC = () => {
   const [swapMessage, setSwapMessage] = useState('');
   const [matchType, setMatchType] = useState<'perfect' | 'partial' | 'all'>('perfect');
   const [isLoading, setIsLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | '3d'>('grid');
   const categories = ['Technical & Programming', 'Creative Arts', 'Music & Audio', 'Languages', 'Lifestyle & Wellness', 'Business & Professional', 'Crafts & DIY', 'Sports & Recreation', 'Academic & Education'];
   const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
@@ -164,10 +165,9 @@ export const SkillDiscovery: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters with Parallax */}
-      <SectionParallax>
-        <Card>
-          <CardContent className="p-6">
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Input
@@ -255,8 +255,7 @@ export const SkillDiscovery: React.FC = () => {
             </div>
           )}
         </CardContent>
-        </Card>
-      </SectionParallax>
+      </Card>
 
       {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -282,36 +281,36 @@ export const SkillDiscovery: React.FC = () => {
           ))
         ) : (
           filteredUsers.map((user) => (
-          <Card key={user.id} hover className="overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <img
-                  src={user.profilePhoto || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'}
-                  alt={user.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {user.name}
-                    </h3>
-                    {user.perfectMatch && (
-                      <Badge variant="success" size="sm">
-                        <Target size={12} className="mr-1" />
-                        Perfect Match
-                      </Badge>
-                    )}
-                    {user.partialMatch && !user.perfectMatch && (
-                      <Badge variant="secondary" size="sm">
-                        <ArrowRight size={12} className="mr-1" />
-                        Partial Match
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <MapPin size={12} />
-                    <span>{user.location || 'Location not set'}</span>
-        
+            <Card key={user.id} hover className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={user.profilePhoto || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'}
+                    alt={user.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {user.name}
+                      </h3>
+                      {user.perfectMatch && (
+                        <Badge variant="success" size="sm">
+                          <Target size={12} className="mr-1" />
+                          Perfect Match
+                        </Badge>
+                      )}
+                      {user.partialMatch && !user.perfectMatch && (
+                        <Badge variant="secondary" size="sm">
+                          <ArrowRight size={12} className="mr-1" />
+                          Partial Match
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin size={12} />
+                      <span>{user.location || 'Location not set'}</span>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -327,109 +326,109 @@ export const SkillDiscovery: React.FC = () => {
                     <span>{user.swapsCompleted} swaps</span>
                   </div>
                 </div>
-              {/* Matching Skills Section */}
-              {(user.matchingSkillsOffered.length > 0 || user.matchingSkillsWanted.length > 0) && (
-                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                  <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
-                    Matching Skills
+
+                {/* Matching Skills Section */}
+                {(user.matchingSkillsOffered.length > 0 || user.matchingSkillsWanted.length > 0) && (
+                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                    <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                      Matching Skills
+                    </h4>
+                    {user.matchingSkillsOffered.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs text-green-700 dark:text-green-300 mb-1">
+                          Can teach you:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {user.matchingSkillsOffered.map((skill) => (
+                            <Badge key={skill.id} variant="primary" size="sm">
+                              {skill.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {user.matchingSkillsWanted.length > 0 && (
+                      <div>
+                        <p className="text-xs text-green-700 dark:text-green-300 mb-1">
+                          Wants to learn from you:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {user.matchingSkillsWanted.map((skill) => (
+                            <Badge key={skill.id} variant="secondary" size="sm">
+                              {skill.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    Skills Offered
                   </h4>
-                  {user.matchingSkillsOffered.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-xs text-green-700 dark:text-green-300 mb-1">
-                        Can teach you:
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {user.matchingSkillsOffered.map((skill) => (
-                          <Badge key={skill.id} variant="primary" size="sm">
-                            {skill.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {user.matchingSkillsWanted.length > 0 && (
-                    <div>
-                      <p className="text-xs text-green-700 dark:text-green-300 mb-1">
-                        Wants to learn from you:
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {user.matchingSkillsWanted.map((skill) => (
-                          <Badge key={skill.id} variant="secondary" size="sm">
-                            {skill.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Skills Offered
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {user.skillsOffered.slice(0, 3).map((skill) => (
-                    <Badge key={skill.id} variant="primary" size="sm">
-                      {skill.name}
-                    </Badge>
-                  ))}
-                  {user.skillsOffered.length > 3 && (
-                    <Badge variant="gray" size="sm">
-                      +{user.skillsOffered.length - 3} more
-                    </Badge>
-                  )}
-
+                  <div className="flex flex-wrap gap-1">
+                    {user.skillsOffered.slice(0, 3).map((skill) => (
+                      <Badge key={skill.id} variant="primary" size="sm">
+                        {skill.name}
+                      </Badge>
+                    ))}
+                    {user.skillsOffered.length > 3 && (
+                      <Badge variant="gray" size="sm">
+                        +{user.skillsOffered.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Skills Wanted
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {user.skillsWanted.slice(0, 3).map((skill) => (
-                    <Badge key={skill.id} variant="secondary" size="sm">
-                      {skill.name}
-                    </Badge>
-                  ))}
-                  {user.skillsWanted.length > 3 && (
-                    <Badge variant="gray" size="sm">
-                      +{user.skillsWanted.length - 3} more
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                  Availability
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {user.availability.map((time) => (
-                    <Badge key={time} variant="secondary" size="sm">
-                      <Clock size={12} className="mr-1" />
-                      {time}
-                    </Badge>
-                  ))}
-
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    Skills Wanted
+                  </h4>
+                  <div className="flex flex-wrap gap-1">
+                    {user.skillsWanted.slice(0, 3).map((skill) => (
+                      <Badge key={skill.id} variant="secondary" size="sm">
+                        {skill.name}
+                      </Badge>
+                    ))}
+                    {user.skillsWanted.length > 3 && (
+                      <Badge variant="gray" size="sm">
+                        +{user.skillsWanted.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => initiateSwap(user)}
-                className="w-full"
-                disabled={!state.currentUser?.skillsOffered.length}
-              >
-                Propose Skill Swap
-              </Button>
-            </CardContent>
-          </Card>
-        ))
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    Availability
+                  </h4>
+                  <div className="flex flex-wrap gap-1">
+                    {user.availability.map((time) => (
+                      <Badge key={time} variant="secondary" size="sm">
+                        <Clock size={12} className="mr-1" />
+                        {time}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => initiateSwap(user)}
+                  className="w-full"
+                  disabled={!state.currentUser?.skillsOffered.length}
+                >
+                  Propose Skill Swap
+                </Button>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
-         
       {!isLoading && filteredUsers.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
