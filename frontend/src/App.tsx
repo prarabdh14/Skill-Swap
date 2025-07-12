@@ -8,9 +8,12 @@ import { SkillDiscovery } from './components/features/SkillDiscovery';
 import { SwapManagement } from './components/features/SwapManagement';
 import { Messages } from './components/features/Messages';
 import { AdminPanel } from './components/features/AdminPanel';
+import { AuthContainer } from './components/auth/AuthContainer';
+import { useApp } from './contexts/AppContext';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
+  const { state } = useApp();
 
   const renderView = () => {
     switch (currentView) {
@@ -31,6 +34,18 @@ function AppContent() {
     }
   };
 
+  // Show auth container if no user is logged in
+  if (!state.currentUser) {
+    return (
+      <AuthContainer 
+        onAuthSuccess={() => {
+          // User successfully authenticated, app will re-render with currentUser
+        }} 
+      />
+    );
+  }
+
+  // Show main app when user is authenticated
   return (
     <div className="min-h-screen bg-bg-light dark:bg-bg-dark transition-colors duration-300">
       <Header currentView={currentView} onViewChange={setCurrentView} />

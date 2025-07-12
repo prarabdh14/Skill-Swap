@@ -21,7 +21,7 @@ type AppAction =
   | { type: 'UNBAN_USER'; payload: string };
 
 const initialState: AppState = {
-  currentUser: mockUsers[0], // Demo user
+  currentUser: null, // Start with no user logged in
   users: mockUsers,
   swapRequests: mockSwapRequests,
   ratings: mockRatings,

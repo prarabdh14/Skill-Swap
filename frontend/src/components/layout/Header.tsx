@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, MessageCircle, User, Moon, Sun, Monitor, Menu, X } from 'lucide-react';
+import { Search, Bell, MessageCircle, User, Moon, Sun, Monitor, Menu, X, LogOut, Settings } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useApp } from '../../contexts/AppContext';
 import { Button } from '../ui/Button';
@@ -13,9 +13,10 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => {
   const { theme, setTheme, actualTheme } = useTheme();
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const unreadMessages = state.messages.filter(m => !m.isRead && m.receiverId === state.currentUser?.id).length;
@@ -40,6 +41,11 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
   if (state.currentUser?.isAdmin) {
     navigation.push({ id: 'admin', label: 'Admin' });
   }
+
+  const handleLogout = () => {
+    dispatch({ type: 'SET_CURRENT_USER', payload: null });
+    setShowUserMenu(false);
+  };
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 backdrop-blur-md">
@@ -151,14 +157,69 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
               )}
             </div>
 
-            {/* Profile */}
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={User}
-              onClick={() => onViewChange('profile')}
-              className="hidden sm:flex"
-            />
+            {/* User Profile Dropdown */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="hidden sm:flex items-center space-x-2"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {state.currentUser?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <span className="hidden lg:block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {state.currentUser?.name}
+                </span>
+              </Button>
+              
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 animate-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {state.currentUser?.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {state.currentUser?.email}
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      onViewChange('profile');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <User size={16} />
+                    <span>Profile</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Settings functionality
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Settings size={16} />
+                    <span>Settings</span>
+                  </button>
+                  
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Mobile Menu Button */}
             <Button
@@ -199,6 +260,19 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
                   )}
                 </Button>
               ))}
+              
+              {/* Mobile logout button */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="w-full justify-start text-red-600 dark:text-red-400"
+                >
+                  <LogOut size={16} className="mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
           </div>
         )}
