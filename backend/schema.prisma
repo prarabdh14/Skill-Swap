@@ -16,34 +16,34 @@ datasource db {
 
 // User model - represents users of the platform
 model User {
-  id             String   @id @default(cuid())
-  name           String
-  email          String   @unique
-  location       String?
-  profilePhoto   String?
-  availability   String[] // Array of availability strings like ['weekends', 'evenings']
-  isPublic       Boolean  @default(true)
-  rating         Float    @default(0)
-  swapsCompleted Int      @default(0)
-  isAdmin        Boolean  @default(false)
-  isBanned       Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  location        String?
+  profilePhoto    String?
+  availability    String[] // Array of availability strings like ['weekends', 'evenings']
+  isPublic        Boolean  @default(true)
+  rating          Float    @default(0)
+  swapsCompleted  Int      @default(0)
+  isAdmin         Boolean  @default(false)
+  isBanned        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  userSkills UserSkill[]
-  badges     UserBadge[]
-
+  userSkills      UserSkill[]
+  badges          UserBadge[]
+  
   // Swap requests
   swapRequestsSent     SwapRequest[] @relation("SwapRequester")
   swapRequestsReceived SwapRequest[] @relation("SwapReceiver")
-
+  
   // Ratings
   ratingsGiven    Rating[] @relation("RatingGiver")
   ratingsReceived Rating[] @relation("RatingReceiver")
-
+  
   // Messages
-  messagesSent     Message[] @relation("MessageSender")
+  messagesSent    Message[] @relation("MessageSender")
   messagesReceived Message[] @relation("MessageReceiver")
 
   @@map("users")
@@ -51,16 +51,16 @@ model User {
 
 // Skill model - represents skills that can be offered/wanted
 model Skill {
-  id          String     @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   category    String
   level       SkillLevel
   description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  userSkills                   UserSkill[]
+  userSkills UserSkill[]
   swapRequestsAsRequesterSkill SwapRequest[] @relation("RequesterSkill")
   swapRequestsAsReceiverSkill  SwapRequest[] @relation("ReceiverSkill")
 
@@ -73,7 +73,7 @@ model UserSkill {
   id        String   @id @default(cuid())
   userId    String
   skillId   String
-  isOffered Boolean // true = offered, false = wanted
+  isOffered Boolean  // true = offered, false = wanted
   createdAt DateTime @default(now())
 
   // Relations
@@ -86,12 +86,12 @@ model UserSkill {
 
 // Badge model - represents achievements/badges
 model Badge {
-  id          String      @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String
   icon        String
   rarity      BadgeRarity
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime @default(now())
 
   // Relations
   userBadges UserBadge[]
@@ -101,9 +101,9 @@ model Badge {
 
 // UserBadge model - junction table for user-badge relationships
 model UserBadge {
-  id         String   @id @default(cuid())
-  userId     String
-  badgeId    String
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
   unlockedAt DateTime @default(now())
 
   // Relations
@@ -116,23 +116,23 @@ model UserBadge {
 
 // SwapRequest model - represents skill swap requests between users
 model SwapRequest {
-  id               String     @id @default(cuid())
-  requesterId      String
-  receiverId       String
+  id              String        @id @default(cuid())
+  requesterId     String
+  receiverId      String
   requesterSkillId String
   receiverSkillId  String
-  status           SwapStatus @default(PENDING)
-  message          String?
-  scheduledDate    DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  status          SwapStatus    @default(PENDING)
+  message         String?
+  scheduledDate   DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relations
-  requester      User  @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  receiver       User  @relation("SwapReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  requesterSkill Skill @relation("RequesterSkill", fields: [requesterSkillId], references: [id], onDelete: Cascade)
-  receiverSkill  Skill @relation("ReceiverSkill", fields: [receiverSkillId], references: [id], onDelete: Cascade)
-
+  requester       User          @relation("SwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver        User          @relation("SwapReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  requesterSkill  Skill         @relation("RequesterSkill", fields: [requesterSkillId], references: [id], onDelete: Cascade)
+  receiverSkill   Skill         @relation("ReceiverSkill", fields: [receiverSkillId], references: [id], onDelete: Cascade)
+  
   // Related ratings
   ratings Rating[]
 
@@ -145,14 +145,14 @@ model Rating {
   swapId      String
   raterId     String
   ratedUserId String
-  rating      Int // 1-5 stars
+  rating      Int      // 1-5 stars
   feedback    String?
   createdAt   DateTime @default(now())
 
   // Relations
-  swap      SwapRequest @relation(fields: [swapId], references: [id], onDelete: Cascade)
-  rater     User        @relation("RatingGiver", fields: [raterId], references: [id], onDelete: Cascade)
-  ratedUser User        @relation("RatingReceiver", fields: [ratedUserId], references: [id], onDelete: Cascade)
+  swap        SwapRequest @relation(fields: [swapId], references: [id], onDelete: Cascade)
+  rater       User        @relation("RatingGiver", fields: [raterId], references: [id], onDelete: Cascade)
+  ratedUser   User        @relation("RatingReceiver", fields: [ratedUserId], references: [id], onDelete: Cascade)
 
   @@unique([swapId, raterId]) // One rating per swap per user
   @@map("ratings")
@@ -160,29 +160,29 @@ model Rating {
 
 // Message model - represents messages between users
 model Message {
-  id         String   @id @default(cuid())
-  senderId   String
-  receiverId String
-  content    String
-  isRead     Boolean  @default(false)
-  timestamp  DateTime @default(now())
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  isRead      Boolean  @default(false)
+  timestamp   DateTime @default(now())
 
   // Relations
-  sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender    User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver  User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
 
 // AdminAnnouncement model - represents system announcements
 model AdminAnnouncement {
-  id        String           @id @default(cuid())
+  id        String                @id @default(cuid())
   title     String
   message   String
   type      AnnouncementType
-  isActive  Boolean          @default(true)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  isActive  Boolean               @default(true)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
 
   @@map("admin_announcements")
 }
